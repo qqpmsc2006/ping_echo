@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use tokio::net::UdpSocket;
 use tokio::time::timeout;
 
-
 mod magic_head;
 mod pong_receiver;
 mod request_manager;
@@ -36,6 +35,7 @@ impl Display for PingResult {
 pub struct Client {
     socket: Arc<UdpSocket>,
     requests: Arc<RequestManager>,
+    receiver: PongReceiver,
 }
 
 impl Client {
@@ -43,18 +43,18 @@ impl Client {
         let socket: Arc<UdpSocket> = Arc::new(UdpSocket::bind("0.0.0.0:0").await.unwrap());
         let requests = Arc::new(RequestManager::new());
 
+        let rs = Arc::clone(&socket);
+        let rr = Arc::clone(&requests);
+        let receiver = PongReceiver::new(rs, rr);
         {
-            let rs = Arc::clone(&socket);
-            let rr = Arc::clone(&requests);
-            tokio::task::spawn(async move {
-                let pr = PongReceiver::new(rs, rr);
-                pr.run().await
-            });
+            let receiver = receiver.clone();
+            tokio::task::spawn(async move { receiver.run().await });
         }
 
         Self {
             socket: Arc::clone(&socket),
             requests: Arc::clone(&requests),
+            receiver,
         }
     }
 
@@ -122,6 +122,7 @@ impl Clone for Client {
         Self {
             socket: Arc::clone(&self.socket),
             requests: Arc::clone(&self.requests),
+            receiver: self.receiver.clone(),
         }
     }
 }
