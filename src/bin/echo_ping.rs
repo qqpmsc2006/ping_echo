@@ -59,7 +59,7 @@ impl PingClient {
                 },
                 res = self.socket.recv_from(&mut buf) => {
                     match res {
-                        Ok((len, peer_addr)) => {
+                        Ok((4, peer_addr)) => {
                             if peer_addr == self.remote_addr {
                                 if &buf[0..4] == head {
                                     return PingResult::Success;
