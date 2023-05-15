@@ -6,7 +6,7 @@ use std::{
 };
 
 use tokio::net::UdpSocket;
-use tokio::time::{timeout, Duration, Instant};
+use tokio::time::{Duration, Instant};
 
 pub enum PingResult {
     Success,
